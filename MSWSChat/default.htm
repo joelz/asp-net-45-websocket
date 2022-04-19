@@ -1,0 +1,107 @@
+﻿<html lang="en">
+<head>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0" />
+    <title>WS SRV</title>
+    <link rel="icon"
+          type="image/x-icon"
+          href="https://cdn.glitch.global/f54c829b-fdcb-4712-8f20-77ac4c0a53f8/internet-40.png?v=1650023528715" />
+    <style>
+        button {
+            padding: 10px 20px;
+            font-size: 24px;
+            margin-top: 20px
+        }
+
+        input {
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <input id="socketUrl" value="wss://" />
+    <button onclick="connect()">connect</button><br />
+    <br />
+    <button onclick="ping()">ping</button><br />
+    <button onclick="closeFromClient()">close from client</button><br />
+    <button onclick="requestClose()">request close</button><br />
+    <br />
+    <button onclick="toggleSpam()" id="spamBtn">start spam</button><br />
+    <br />
+    <button onclick="keepAlive()" id="keepAlive">Keep Alive</button><br />
+    <br />
+    <button onclick="sendHi()" id="keepAlive">Send Hi</button><br />
+    <script>
+        function getWsUrl() {
+            const scheme = document.location.protocol == "https:" ? "wss" : "ws";
+            return scheme + "://" + window.location.hostname + "/WSHandler.ashx";
+        }
+
+        const urlInput = document.getElementById("socketUrl");
+        urlInput.value = getWsUrl();
+
+        let ws = null;
+
+        function connect() {
+            ws = new WebSocket(urlInput.value);
+
+            ws.addEventListener("open", function (ev) {
+                console.log("server connected", ev);
+            });
+
+            ws.addEventListener("message", function (ev) {
+                console.log("Message from server: ", ev);
+            });
+        }
+
+        function ping() {
+            ws.send("ping");
+        }
+
+        function closeFromClient() {
+            ws.close();
+        }
+
+        function requestClose() {
+            ws.send("requestClose");
+        }
+
+        function sendHi() {
+            ws.send("Hi");
+        }
+
+        let isSpamming = false;
+        function toggleSpam() {
+            const btn = document.getElementById("spamBtn");
+            isSpamming = !isSpamming;
+            if (isSpamming) {
+                btn.textContent = "stop spam";
+            } else {
+                btn.textContent = "start spam";
+            }
+        }
+
+        function loop() {
+            if (isSpamming) {
+                ping();
+            }
+            requestAnimationFrame(loop);
+        }
+        loop();
+
+        function keepAlive() {
+            setInterval(() => {
+                try {
+                    ws.send("ping");
+                    console.log("ping sended.");
+                } catch { }
+            }, 1000 * 3);
+        }
+    </script>
+    <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+    <script>
+        // VConsole 默认会挂载到 `window.VConsole` 上
+        var vConsole = new window.VConsole();
+    </script>
+</body>
+</html>
